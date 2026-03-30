@@ -21,7 +21,7 @@ export enum EUserStatus {
 /**
  * Outbound user representation — never contains a password in responses.
  */
-export interface UserDTO extends BasicModelDTO{
+export interface UserDTO extends BasicModelDTO {
     firstName : string;
     lastName : string;
     email : string;
