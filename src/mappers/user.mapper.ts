@@ -1,0 +1,29 @@
+import { User, UserDBO, UserDTO, UserFullDTO, UserLoginDTO, UserShortDTO, NewUserDTO } from "../models/user.model";
+
+/**
+ * Mapper class to convert between User and UserDBO/UserDTO/UserShortDTO
+ */
+export class UserMapper {
+    public static toUserDTO(user: User): UserDTO {
+        return {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            username: user.username,
+            role: user.role,
+            status: user.status,
+            createdAt: user.createdAt ? new Date(user.createdAt) : undefined,
+            updatedAt: user.updatedAt ? new Date(user.updatedAt) : undefined
+        };
+    }
+
+    public static toUserShortDTO(userDBO: User): UserShortDTO {
+        return {
+            id: userDBO.id,
+            firstName: userDBO.firstName,
+            lastName: userDBO.lastName
+        };
+    }
+
+}

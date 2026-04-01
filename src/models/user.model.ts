@@ -1,4 +1,4 @@
-import { BasicModelDBO, BasicModelDTO } from "./basic.model";
+import { BasicModelDBO, BasicModelDTO, BasicModel } from "./basic.model";
 
 /**
  * Variable constants (enum) of type : string - for the user role
@@ -17,6 +17,19 @@ export enum EUserStatus {
     ACTIVE = 'active',
     INACTIVE = 'inactive'
 };
+
+/**
+ * 
+ */
+export interface User extends BasicModel {
+    firstName : string;
+    lastName : string;
+    email : string;
+    username : string;
+    password ?: string;
+    role : ERole;
+    status : EUserStatus;
+}
 
 /**
  * Outbound user representation — never contains a password in responses.
