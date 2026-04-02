@@ -18,12 +18,25 @@ export class UserMapper {
         };
     }
 
-    public static toUserShortDTO(userDBO: User): UserShortDTO {
+    public static toUserShortDTO(user: User): UserShortDTO {
         return {
-            id: userDBO.id,
-            firstName: userDBO.firstName,
-            lastName: userDBO.lastName
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName
         };
+    }
+
+    public static fromDBO(dbo: UserDBO) : User {
+        return {
+            id : dbo.id,
+            firstName : dbo.first_name,
+            lastName : dbo.last_name,
+            email : dbo.email,
+            username : dbo.username,
+            role : dbo.role,
+            status : dbo.status,
+            //createdAt : new Date (u.createdAt);
+        }
     }
 
 }

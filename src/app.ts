@@ -1,4 +1,5 @@
 import express, { type Express } from 'express'
+import { userController } from './controllers/user.controller';
 
 export const app : Express = express();
 
@@ -22,3 +23,15 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
   res.send('Hello World!');
 });
+
+// use the controller to use the route | defines the route to users
+app.use('/users', userController);
+
+// use the controller to use the route | defines the route to fields
+app.use('/fields', userController);
+
+// use the controller to use the route | defines the route to games
+app.use('/games', userController);
+
+// use the controller to use the route | defines the route to teams
+app.use('/teams', userController);

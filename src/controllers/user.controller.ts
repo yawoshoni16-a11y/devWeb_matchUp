@@ -1,36 +1,136 @@
 import { Router, Request, Response } from "express";
 import { LoggerService } from "../services/logger.service";
-import { ERole } from "../models/user.model";
+import { ERole, User, UserDTO } from "../models/user.model";
+import { UsersServices } from "../services/user.service";
+import { UserMapper } from "../mappers/user.mapper";
+import { isNumber, isString, isUserDTO } from "../utils/guards";
 
 export const userController = Router();
 
 /**
- * This function returns all the users depending on the roles
+ * This route returns all the users depending on the roles
  */
-userController.get("/", (req: Request, res: Response) => {
-    LoggerService.info('GET /users/');
+userController.get('/', (req: Request, res: Response) => {
+    LoggerService.info('[GET] /users/');
 
     const role : ERole = req.body;
-    const usersDBO = 
+    const usersDTO = [];
     
+    /**
+     * Condition regarding the role.
+     * An Admin have all the informations about an user.
+     * --> UserDTO[]
+     */
     if (role === ERole.ADMIN) {
-            return {
-                id : usersDBO.id,
-                firstName : usersDBO.first_name,
-                lastName : usersDBO.last_name,
-                email : usersDBO.email,
-                username : usersDBO.username,
-                role : usersDBO.role,
-                status : usersDBO.status
-            };
-            
-         } 
-         if (role === ERole.PLAYER) {
-            return {
-                id : usersDBO.id,
-                firstName : usersDBO.first_name,
-                lastName : usersDBO.last_name
-            } 
-            
-        }
-})
+        const users = UsersServices.getAllAdmin();
+
+        for (let i = 0; i < users.length; i++) {
+            usersDTO.push(UserMapper.toUserDTO(users[i]));
+        };
+};
+
+    /**
+     * Condition regarding the role.
+     * Others people receives short informations about an user.
+     * --> UserShortDTO[]
+     */
+    if (role === ERole.PLAYER) {
+        const users = UsersServices.getAllOther();
+
+        for (let i = 0; i < users.length; i++) {
+            usersDTO.push(UserMapper.toUserShortDTO(users[i]));
+        };
+};
+
+    return res.status(200).json(usersDTO)
+});
+
+/**
+ * This route returns the user that match with the username
+ */
+userController.get('/username/:username', (req: Request, res: Response) => {
+    LoggerService.info('[GET] /users/username/:username');
+    
+    const username : string = req.params.username;
+
+    /**
+     * Verify the type of the username 
+     */
+    if (!isString(username)) {
+        LoggerService.error('Username must be a string');
+        return res.status(400).send('Username must be a string');
+    };
+
+    const user: User | undefined = UsersServices.getByUsername(username);
+
+    if (user === undefined) {
+        LoggerService.error('Username not found');
+        return res.status(404).send('Username not found');
+    }
+
+    /**
+     * Translate the model to a DTO
+     */
+    const userDTO: UserDTO = UserMapper.toUserDTO(user);
+    return res.status(200).json(userDTO);
+});
+
+/**
+ * This route returns the user that match with the email
+ */
+userController.get('/email/:email', (req: Request, res: Response) => {
+    LoggerService.info('[GET] /users/email/:email');
+    
+    const email : string = req.params.email;
+
+    /**
+     * Verify the type of the username 
+     */
+    if (!isString(email)) {
+        LoggerService.error('Email must be a string');
+        return res.status(400).send('Email must be a string');
+    };
+
+    const user: User | undefined = UsersServices.getByEmail(email);
+
+    if (user === undefined) {
+        LoggerService.error('Email not found');
+        return res.status(404).send('Email not found');
+    }
+
+    /**
+     * Translate the model to a DTO
+     */
+    const userDTO: UserDTO = UserMapper.toUserDTO(user);
+    return res.status(200).json(userDTO);
+});
+
+/**
+ * This route returns the user that match with the email
+ */
+userController.get('/id/:id', (req: Request, res: Response) => {
+    LoggerService.info('[GET] /users/id/:id');
+    
+    const id = Number(req.params.id);
+
+    /**
+     * Verify the type of the username 
+     */
+    if (!isNumber(id)) {
+        LoggerService.error('Id must be a number');
+        return res.status(400).send('Id must be a number');
+    };
+
+    const user: User | undefined = UsersServices.getById(id);
+
+    if (user === undefined) {
+        LoggerService.error('Id not found');
+        return res.status(404).send('Id not found');
+    }
+
+    /**
+     * Translate the model to a DTO
+     */
+    const userDTO: UserDTO = UserMapper.toUserDTO(user);
+    return res.status(200).json(userDTO);
+});
