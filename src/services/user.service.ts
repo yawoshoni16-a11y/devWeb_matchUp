@@ -112,4 +112,45 @@ export class UsersServices {
         }
         return undefined;
     }
+
+    /**
+     * Function that creates a new User without requiring authentication.
+     */
+    public static create(user : User) : User | undefined {
+        let userDBO : UserDBO[] = [];
+        try {
+            userDBO = FilesService.readFile<UserDBO>(this.fileName);
+        } catch (error) {
+            LoggerService.error(`Error reading users file: ${error}`);
+            return undefined;
+        }
+
+        // ID calculation
+        let maxId = 0;
+        for (let i = 0; i < userDBO.length; i++) {
+            if (userDBO[i].id > maxId) {
+                maxId = userDBO[i].id;
+            }
+        }
+
+        // Gives a new ID to the new User (+1 because he or she is new)
+        user.id = maxId + 1;
+
+        // Convert to DBO
+        const newUserDBO = UserMapper.toDBO(user);
+        userDBO.push(newUserDBO);
+
+        // Write in the file
+        try {
+            FilesService.writeFile<UserDBO>('data/users.json', userDBO);
+        } catch (error) {
+            LoggerService.error(error);
+            return undefined;
+        }
+        return user;
+    }
+
+    /**
+     * Function that update a User without requiring authentication.
+     */
 }

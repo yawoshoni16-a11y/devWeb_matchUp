@@ -1,9 +1,9 @@
 import { Router, Request, Response } from "express";
 import { LoggerService } from "../services/logger.service";
-import { ERole, User, UserDTO } from "../models/user.model";
+import { ERole, NewUserDTO, User, UserDTO, NewUser } from "../models/user.model";
 import { UsersServices } from "../services/user.service";
 import { UserMapper } from "../mappers/user.mapper";
-import { isNumber, isString, isUserDTO } from "../utils/guards";
+import { isNewUserDTO, isNumber, isString, isUserDTO } from "../utils/guards";
 
 export const userController = Router();
 
@@ -134,3 +134,33 @@ userController.get('/id/:id', (req: Request, res: Response) => {
     const userDTO: UserDTO = UserMapper.toUserDTO(user);
     return res.status(200).json(userDTO);
 });
+
+/**
+ * This route allows you to create a new user
+ */
+userController.post('/', (req: Request, res: Response) => {
+    LoggerService.info('[POST] /users/');
+
+    const UserDTO: NewUserDTO = req.body;
+
+    // Verify if the user is valid
+    if (!isNewUserDTO(UserDTO)) {
+        LoggerService.error('Invalid User');
+        return res.status(400).send('Invalid user');      
+    };
+
+    // Convert DTO → User (métier)
+    const user: User = UserMapper.fromNewDTO(UserDTO);
+
+    // Call service
+    const createdUser = UsersServices.create(user);
+
+    if (!createdUser) {
+        return res.status(500).send('Error creating user');
+    }
+
+    // Convert User → DTO de réponse
+    const responseDTO = UserMapper.toUserDTO(createdUser);
+
+    return res.status(201).json(responseDTO);
+})

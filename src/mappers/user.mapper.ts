@@ -1,4 +1,4 @@
-import { User, UserDBO, UserDTO, UserFullDTO, UserLoginDTO, UserShortDTO, NewUserDTO } from "../models/user.model";
+import { User, UserDBO, UserDTO, UserFullDTO, UserLoginDTO, UserShortDTO, NewUserDTO, NewUser } from "../models/user.model";
 
 /**
  * Mapper class to convert between User and UserDBO/UserDTO/UserShortDTO
@@ -16,7 +16,7 @@ export class UserMapper {
             createdAt: user.createdAt ? new Date(user.createdAt) : undefined,
             updatedAt: user.updatedAt ? new Date(user.updatedAt) : undefined
         };
-    }
+    };
 
     public static toUserShortDTO(user: User): UserShortDTO {
         return {
@@ -24,6 +24,16 @@ export class UserMapper {
             firstName: user.firstName,
             lastName: user.lastName
         };
+    };
+
+    public static fromNewDTO(dto: NewUserDTO) : NewUser {
+        return {
+            firstName : dto.firstName,
+            lastName : dto.lastName,
+            email : dto.email,
+            username : dto.username,
+            password : dto.password
+        }
     }
 
     public static fromDBO(dbo: UserDBO) : User {
@@ -35,8 +45,29 @@ export class UserMapper {
             username : dbo.username,
             role : dbo.role,
             status : dbo.status,
-            //createdAt : new Date (u.createdAt);
+            password : dbo.password
         }
-    }
+    };
 
+    public static toDBO(user : User) : UserDBO {
+        return {
+            id : user.id,
+            first_name : user.firstName,
+            last_name : user.lastName,
+            email : user.email,
+            username : user.username,
+            role : user.role,
+            status : user.status,  
+            password : user.password
+        }
+    };
+
+    public static toTableDBO(users : User[]) : UserDBO[] {
+        const tableDBO: UserDBO[] = [];
+        for (const user of users) {
+            let userDBO : UserDBO = UserMapper.toDBO(user);
+            tableDBO.push(userDBO);
+        }
+        return tableDBO;
+    };
 }

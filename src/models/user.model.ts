@@ -26,7 +26,7 @@ export interface User extends BasicModel {
     lastName : string;
     email : string;
     username : string;
-    password ?: string;
+    password : string;
     role : ERole;
     status : EUserStatus;
 }
@@ -77,6 +77,17 @@ export interface NewUserDTO {
     username : string;
     password : string;
 };
+
+/**
+ * Payload for creating a user (POST /users). Role is always forced to player
+ */
+export interface NewUser {
+    firstName : string;
+    lastName : string;
+    email : string;
+    username : string;
+    password : string;
+}
 
 /**
  * Credentials (indentifiants) used to authenticate a user
