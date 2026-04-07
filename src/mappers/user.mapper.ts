@@ -43,9 +43,13 @@ export class UserMapper {
             lastName : dbo.last_name,
             email : dbo.email,
             username : dbo.username,
+            password : dbo.password,
             role : dbo.role,
             status : dbo.status,
-            password : dbo.password
+            createdAt: dbo.createdAt ? new Date(dbo.createdAt) : undefined,
+            updatedAt: dbo.updatedAt ? new Date(dbo.updatedAt) : undefined,
+            deletedAt: dbo.deletedAt ? new Date(dbo.deletedAt) : undefined
+            
         }
     };
 
@@ -58,7 +62,10 @@ export class UserMapper {
             username : user.username,
             role : user.role,
             status : user.status,  
-            password : user.password
+            password : user.password,
+            createdAt: user.createdAt ? user.createdAt.toISOString() : undefined,
+            updated_at: user.updatedAt ? user.updatedAt.toISOString() : undefined,
+            deleted_at: user.deletedAt ? user.deletedAt.toISOString() : undefined
         }
     };
 

@@ -150,7 +150,7 @@ userController.post('/', (req: Request, res: Response) => {
     };
 
     // Convert DTO → User (métier)
-    const user: User = UserMapper.fromNewDTO(UserDTO);
+    const user: NewUser = UserMapper.fromNewDTO(UserDTO);
 
     // Call service
     const createdUser = UsersServices.create(user);

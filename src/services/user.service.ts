@@ -1,14 +1,15 @@
 import { FilesService } from "./files.service";
-import { User, UserDTO, UserDBO, UserShortDTO, ERole} from "../models/user.model";
+import { User, UserDTO, UserDBO, UserShortDTO, ERole, NewUser, NewUserDTO, EUserStatus} from "../models/user.model";
 import { LoggerService } from "./logger.service";
 import { UserMapper } from "../mappers/user.mapper";
 import { isNumber, isString } from "../utils/guards";
+import bcrypt from "bcrypt";
 
 /**
  * Exporting class of UsersServices
  */
 export class UsersServices {
-    private static fileName = 'data/users.json';
+    protected static fileName = "./data/users.json";
 
     /**
      * Function that allows an Admin to get all the informations about a user
@@ -116,7 +117,7 @@ export class UsersServices {
     /**
      * Function that creates a new User without requiring authentication.
      */
-    public static create(user : User) : User | undefined {
+    public static create(user : NewUser) : User | undefined {
         let userDBO : UserDBO[] = [];
         try {
             userDBO = FilesService.readFile<UserDBO>(this.fileName);
@@ -133,11 +134,19 @@ export class UsersServices {
             }
         }
 
-        // Gives a new ID to the new User (+1 because he or she is new)
-        user.id = maxId + 1;
+        // Gives a new ID to the new User (+1 because he or she or them is new)
+        const newUser : User = {
+            ...user,
+            id :  maxId + 1,
+            role: ERole.PLAYER,
+            password: bcrypt.hashSync(user.password,10),
+            status: EUserStatus.ACTIVE,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        }
 
         // Convert to DBO
-        const newUserDBO = UserMapper.toDBO(user);
+        const newUserDBO = UserMapper.toDBO(newUser);
         userDBO.push(newUserDBO);
 
         // Write in the file
@@ -147,7 +156,7 @@ export class UsersServices {
             LoggerService.error(error);
             return undefined;
         }
-        return user;
+        return newUser;
     }
 
     /**
