@@ -3,9 +3,9 @@
  */
 export interface BasicModel {
     id : number;
-    createdAt ?: Date;
-    updatedAt ?: Date;
-    deletedAt ?: Date | undefined;
+    createdAt : Date;
+    updatedAt : Date;
+    
 };
 
 /**
@@ -13,9 +13,9 @@ export interface BasicModel {
  */
 export interface BasicModelDBO {
     id : number;
-    createdAt ?: Date;
-    updatedAt ?: Date;
-    deletedAt ?: Date | undefined;
+    created_at : string;
+    updated_at : string;
+    
 };
 
 /**
@@ -23,7 +23,7 @@ export interface BasicModelDBO {
  */
 export interface BasicModelDTO {
     id : number;
-    createdAt ?: Date;
-    updatedAt ?: Date;
+    createdAt ?: string;
+    updatedAt ?: string;
 };
 

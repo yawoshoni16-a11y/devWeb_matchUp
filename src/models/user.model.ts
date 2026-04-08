@@ -1,6 +1,14 @@
 import { BasicModelDBO, BasicModelDTO, BasicModel } from "./basic.model";
 
 /**
+ * Variable that allows us to use a authentification on the information 
+ * where we need that
+ */
+export interface AuthentificatedUser {
+    username : string;
+    token : string
+}
+/**
  * Variable constants (enum) of type : string - for the user role
  */
 export enum ERole {
@@ -39,7 +47,7 @@ export interface UserDTO extends BasicModelDTO {
     lastName : string;
     email : string;
     username : string;
-    password ?: string;
+    password : string;
     role : ERole;
     status : EUserStatus;
 };

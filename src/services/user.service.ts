@@ -12,31 +12,25 @@ export class UsersServices {
     protected static fileName = "./data/users.json";
 
     /**
-     * Function that allows an Admin to get all the informations about a user
-     * UserDTO[]
+     * 
      */
-    public static getAllAdmin() : User[] {
-        let data : UserDBO[] = [];
+    public static validateUser(pwd: string, hashedPwd : string) : boolean {
+        const isPasswordValid = bcrypt.compareSync(pwd, hashedPwd);
 
-        try {
-            data = FilesService.readFile<UserDBO>(this.fileName);
-        } catch (error) {
-            LoggerService.error(`Error reading users file: ${error}`);
-            return [];
+        if (!isPasswordValid) {
+            LoggerService.error('Invalid password');
+            return false;
+        } else {
+            LoggerService.info('Valid password');
+            return true;
         }
-
-        const results : User[] = [];
-        for (let i = 0; i < data.length; i++) {
-            results.push(UserMapper.fromDBO(data[i]));
-        }
-        return results;
     };
 
     /**
-     * Function that allows an Other user to get a short version of the user
-     * UserShortDTO[]
+     * Function that allows an Admin to get all the informations about a user
+     * UserDTO[]
      */
-    public static getAllOther() : User[] {
+    public static getAll() : User[] {
         let data : UserDBO[] = [];
 
         try {
@@ -112,7 +106,7 @@ export class UsersServices {
             } 
         }
         return undefined;
-    }
+    };
 
     /**
      * Function that creates a new User without requiring authentication.
@@ -157,7 +151,7 @@ export class UsersServices {
             return undefined;
         }
         return newUser;
-    }
+    };
 
     /**
      * Function that update a User without requiring authentication.

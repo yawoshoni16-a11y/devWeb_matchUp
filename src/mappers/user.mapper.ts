@@ -13,8 +13,9 @@ export class UserMapper {
             username: user.username,
             role: user.role,
             status: user.status,
-            createdAt: user.createdAt ? new Date(user.createdAt) : undefined,
-            updatedAt: user.updatedAt ? new Date(user.updatedAt) : undefined
+            password: user.password,
+            createdAt: user.createdAt.toISOString(),
+            updatedAt: user.updatedAt.toISOString(),
         };
     };
 
@@ -46,12 +47,25 @@ export class UserMapper {
             password : dbo.password,
             role : dbo.role,
             status : dbo.status,
-            createdAt: dbo.createdAt ? new Date(dbo.createdAt) : undefined,
-            updatedAt: dbo.updatedAt ? new Date(dbo.updatedAt) : undefined,
-            deletedAt: dbo.deletedAt ? new Date(dbo.deletedAt) : undefined
-            
+            createdAt: new Date(dbo.created_at),
+            updatedAt: new Date(dbo.updated_at)
         }
     };
+
+    public static fromDTO(dto : UserDTO) : User {
+        return {
+            firstName: dto.firstName,
+            lastName: dto.lastName,
+            email: dto.email,
+            username: dto.username,
+            status: dto.status,
+            password: dto.password,
+            role: dto.role,
+            id: dto.id,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        }
+    }
 
     public static toDBO(user : User) : UserDBO {
         return {
@@ -63,9 +77,8 @@ export class UserMapper {
             role : user.role,
             status : user.status,  
             password : user.password,
-            createdAt: user.createdAt ? user.createdAt.toISOString() : undefined,
-            updated_at: user.updatedAt ? user.updatedAt.toISOString() : undefined,
-            deleted_at: user.deletedAt ? user.deletedAt.toISOString() : undefined
+            created_at: user.createdAt.toISOString(),
+            updated_at: user.updatedAt.toISOString(),
         }
     };
 

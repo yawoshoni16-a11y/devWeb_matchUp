@@ -22,12 +22,12 @@ userController.get('/', (req: Request, res: Response) => {
      * --> UserDTO[]
      */
     if (role === ERole.ADMIN) {
-        const users = UsersServices.getAllAdmin();
+        const users = UsersServices.getAll();
 
         for (let i = 0; i < users.length; i++) {
             usersDTO.push(UserMapper.toUserDTO(users[i]));
         };
-};
+    };
 
     /**
      * Condition regarding the role.
@@ -35,7 +35,7 @@ userController.get('/', (req: Request, res: Response) => {
      * --> UserShortDTO[]
      */
     if (role === ERole.PLAYER) {
-        const users = UsersServices.getAllOther();
+        const users = UsersServices.getAll();
 
         for (let i = 0; i < users.length; i++) {
             usersDTO.push(UserMapper.toUserShortDTO(users[i]));
@@ -91,12 +91,28 @@ userController.get('/email/:email', (req: Request, res: Response) => {
         return res.status(400).send('Email must be a string');
     };
 
+    /**
+     * Verify the size of the email
+     */
+    if (email.trim().length < 4) {
+        LoggerService.error('The email must have minimum 4 caracters');
+        return res.status(400).send('The email must have minimum 4 caracters');
+    };
+
+    /**
+     * Verify if the email contains a caracter (@, .)
+     */
+    if (!email.includes('@') && !email.includes('.')) {
+        LoggerService.error('Wrong email');
+        return res.status(400).send('Wrong email');
+    };
+
     const user: User | undefined = UsersServices.getByEmail(email);
 
     if (user === undefined) {
         LoggerService.error('Email not found');
         return res.status(404).send('Email not found');
-    }
+    };
 
     /**
      * Translate the model to a DTO
@@ -149,18 +165,50 @@ userController.post('/', (req: Request, res: Response) => {
         return res.status(400).send('Invalid user');      
     };
 
-    // Convert DTO → User (métier)
+    // Convert DTO -> User 
     const user: NewUser = UserMapper.fromNewDTO(UserDTO);
 
-    // Call service
+    /**
+     * Verify the type of the username 
+     */
+    if (!isString(user.email)) {
+        LoggerService.error('Email must be a string');
+        return res.status(400).send('Email must be a string');
+    };
+
+    /**
+     * Verify the size of the email
+     */
+    if (user.email.trim().length < 4) {
+        LoggerService.error('The email must have minimum 4 caracters');
+        return res.status(400).send('The email must have minimum 4 caracters');
+    };
+
+    /**
+     * Verify if the email contains a caracter (@, .)
+     */
+    if (!user.email.includes('@') && !user.email.includes('.')) {
+        LoggerService.error('Wrong email');
+        return res.status(400).send('Wrong email');
+    };
+
+    /**
+     * Verify if the username is already used 
+     */
+    if(UsersServices.getByUsername(user.username) !== undefined || UsersServices.getByEmail(user.email) !== undefined){
+        LoggerService.error('Username or email already chosen');
+        return res.status(400).send('Username or email already chosen');
+    };
+
+    // Call service to create an user
     const createdUser = UsersServices.create(user);
 
     if (!createdUser) {
-        return res.status(500).send('Error creating user');
-    }
+        return res.status(400).send('Error creating user');
+    };
 
-    // Convert User → DTO de réponse
+    // Convert User -> DTO and send the response
     const responseDTO = UserMapper.toUserDTO(createdUser);
 
     return res.status(201).json(responseDTO);
-})
+});

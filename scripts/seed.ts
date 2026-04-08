@@ -98,7 +98,7 @@ const users = [
     updated_at: NOW,
   },
   {
-    id: 7,
+    id: 8,
     email: 'inactive@example.com',
     first_name: 'Inactive',
     last_name: 'player',
