@@ -1,31 +1,31 @@
 // All the routes about the implementation for the User Module
 
-# Get the list of Users, if the role is Admin
+#1 Get the list of Users, if the role is Admin
 GET http://localhost:3000/users HTTP/1.1
-
+Authorization: 
 ###
 
-# Get the list of Users, if the role isn't Admin
+#2 Get the list of Users, if the role isn't Admin
 GET http://localhost:3000/users HTTP/1.1
-
+Authorization: ZnJlZGRv
 ###
 
-# Get a user by his username
+#3 Get a user by his username (only admin or referee)
 GET http://localhost:3000/users/username/marilou HTTP/1.1
-
+Authorization: 
 ###
 
-# Get a user by his email
+#4 Get a user by his email
 GET http://localhost:3000/users/email/marie@example.com HTTP/1.1
-
+Authorization: 
 ###
 
-# Get a user by his id
+#5 Get a user by his id
 GET http://localhost:3000/users/id/4 HTTP/1.1
 
 ###
 
-# Post a new user (Success version)
+#6 Post a new user (Success version)
 POST http://localhost:3000/users HTTP/1.1
 Content-Type: application/json
 
@@ -38,14 +38,14 @@ Content-Type: application/json
 }
 
 ###
-# Post a new user (Fail version because the user is already created)
+#7 Post a new user (Fail version because the user is already created)
 POST http://localhost:3000/users HTTP/1.1
 Content-Type: application/json
 
 {
-    "firstName": "Freddy", 
+    "firstName": "joseph", 
     "lastName": "Potiche",
-    "email": "fred@example.com",
-    "username": "fredo",
+    "email": "josep@example.com",
+    "username": "jesepo",
     "password": "Fred123"
 }

@@ -1,0 +1,2 @@
+# Get a short view of all teams (TeamShortDTO)
+GET http://localhost:3000/teams HTTP/1.1

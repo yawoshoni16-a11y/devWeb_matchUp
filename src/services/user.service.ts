@@ -9,7 +9,7 @@ import bcrypt from "bcrypt";
  * Exporting class of UsersServices
  */
 export class UsersServices {
-    protected static fileName = "./data/users.json";
+    protected static fileName = "data/users.json";
 
     /**
      * 
@@ -38,12 +38,14 @@ export class UsersServices {
         } catch (error) {
             LoggerService.error(`Error reading users file: ${error}`);
             return [];
-        }
+        };
 
         const results : User[] = [];
         for (let i = 0; i < data.length; i++) {
-            results.push(UserMapper.fromDBO(data[i]));
+            if (data[i].status === EUserStatus.ACTIVE) {
+                results.push(UserMapper.fromDBO(data[i]));
         }
+    };
         return results;
     };
 
@@ -156,4 +158,40 @@ export class UsersServices {
     /**
      * Function that update a User without requiring authentication.
      */
+    public static update(id: number, updatedUser: User) : User | undefined {
+        let userDBO : UserDBO [] = [];
+        try {
+            userDBO = FilesService.readFile<UserDBO>(this.fileName);
+        } catch (error) {
+            LoggerService.error(error);
+            return undefined;
+        };
+
+        // Find the user to update by his ID
+        for (let i = 0; i < userDBO.length; i++) {
+            if(userDBO[i].id === id) {
+
+            // Only update allowed fields - preserve role, password and status
+            userDBO[i].first_name = updatedUser.firstName;
+            userDBO[i].last_name = updatedUser.lastName;
+            userDBO[i].email = updatedUser.email;
+            userDBO[i].username = updatedUser.username;
+            userDBO[i].updated_at = new Date().toISOString();
+
+            // Save the updated list back to the file
+            try {
+                FilesService.writeFile<UserDBO>(this.fileName, userDBO);
+            } catch (error) {
+                LoggerService.error(error);
+                return undefined;
+            };
+
+            // Return the updated user
+            return updatedUser;
+            };
+            
+        };
+        // User not found
+        return undefined;
+    };
 }

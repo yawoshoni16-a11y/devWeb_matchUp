@@ -1,46 +1,45 @@
 import { Router, Request, Response } from "express";
 import { LoggerService } from "../services/logger.service";
-import { ERole, NewUserDTO, User, UserDTO, NewUser } from "../models/user.model";
+import { ERole, NewUserDTO, User, UserDTO, NewUser, AuthenticatedUser, UserShortDTO } from "../models/user.model";
 import { UsersServices } from "../services/user.service";
 import { UserMapper } from "../mappers/user.mapper";
 import { isNewUserDTO, isNumber, isString, isUserDTO } from "../utils/guards";
+import { AuthServices } from "../services/auth.service";
+import { AuthenticatedRequest } from "../models/auth.model";
 
 export const userController = Router();
 
 /**
  * This route returns all the users depending on the roles
  */
-userController.get('/', (req: Request, res: Response) => {
+userController.get('/', AuthServices.authorize,(req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[GET] /users/');
 
-    const role : ERole = req.body;
+    const role : ERole = req.user!.role;
     const usersDTO = [];
-    
+    const users = UsersServices.getAll();
+     
     /**
      * Condition regarding the role.
      * An Admin have all the informations about an user.
      * --> UserDTO[]
      */
     if (role === ERole.ADMIN) {
-        const users = UsersServices.getAll();
-
         for (let i = 0; i < users.length; i++) {
             usersDTO.push(UserMapper.toUserDTO(users[i]));
         };
     };
-
+    
     /**
      * Condition regarding the role.
      * Others people receives short informations about an user.
      * --> UserShortDTO[]
      */
     if (role === ERole.PLAYER) {
-        const users = UsersServices.getAll();
-
         for (let i = 0; i < users.length; i++) {
             usersDTO.push(UserMapper.toUserShortDTO(users[i]));
         };
-};
+    };
 
     return res.status(200).json(usersDTO)
 });
@@ -48,7 +47,7 @@ userController.get('/', (req: Request, res: Response) => {
 /**
  * This route returns the user that match with the username
  */
-userController.get('/username/:username', (req: Request, res: Response) => {
+userController.get('/username/:username', AuthServices.authorize, AuthServices.isAdminOrReferee, (req: Request, res: Response) => {
     LoggerService.info('[GET] /users/username/:username');
     
     const username : string = req.params.username;
@@ -78,7 +77,7 @@ userController.get('/username/:username', (req: Request, res: Response) => {
 /**
  * This route returns the user that match with the email
  */
-userController.get('/email/:email', (req: Request, res: Response) => {
+userController.get('/email/:email', AuthServices.authorize, AuthServices.isAdminOrReferee, (req: Request, res: Response) => {
     LoggerService.info('[GET] /users/email/:email');
     
     const email : string = req.params.email;
@@ -124,7 +123,7 @@ userController.get('/email/:email', (req: Request, res: Response) => {
 /**
  * This route returns the user that match with the email
  */
-userController.get('/id/:id', (req: Request, res: Response) => {
+userController.get('/id/:id', (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[GET] /users/id/:id');
     
     const id = Number(req.params.id);
@@ -138,17 +137,21 @@ userController.get('/id/:id', (req: Request, res: Response) => {
     };
 
     const user: User | undefined = UsersServices.getById(id);
-
     if (user === undefined) {
         LoggerService.error('Id not found');
         return res.status(404).send('Id not found');
-    }
+    };
+    
+    const connectedUser = req.user!;
 
-    /**
-     * Translate the model to a DTO
-     */
-    const userDTO: UserDTO = UserMapper.toUserDTO(user);
-    return res.status(200).json(userDTO);
+    // Admin receives UserDTO, own profile receives UserDTO, other users receive UserShortDTO
+    if (connectedUser.role === ERole.ADMIN || connectedUser.id === id) {
+        const userDTO: UserDTO = UserMapper.toUserDTO(user);
+        return res.status(200).json(userDTO);
+    };
+
+    const userShortDTO: UserShortDTO = UserMapper.toUserShortDTO(user);
+    return res.status(200).json(userShortDTO);
 });
 
 /**
@@ -211,4 +214,43 @@ userController.post('/', (req: Request, res: Response) => {
     const responseDTO = UserMapper.toUserDTO(createdUser);
 
     return res.status(201).json(responseDTO);
+});
+
+/**
+ * This route allows an admin to update any users and an user to update
+ * his/her own profile
+ */
+userController.put('/:id', AuthServices.authorize, (req: Request, res: Response) => {
+    LoggerService.info('PUT /users/:id');
+    
+    const id = parseInt(req.params.id);
+    const updatedUser = req.body;
+    const connectedUser = req.body;
+
+    // Verify that the id is a valid number
+    if (isNumber(id)) {
+        LoggerService.error('ID is not a valid number');
+        return res.status(400).send('ID is not a valid number');
+    };
+
+    // Verify that the body ID matches the path ID
+    if (updatedUser.id !== id) {
+        LoggerService.error('Body ID and path ID do not match');
+        return res.status(400).send('Invalid id');
+    };
+
+    // Non-admin user can only update their own profile
+    if (connectedUser.role !== ERole.ADMIN && connectedUser.id !== id) {
+        LoggerService.error(`Access denied: user '${connectedUser.username}' tried to update another user`);
+        return res.status(403).send('Forbidden');
+    };
+
+    // Update the user
+    const result = UsersServices.update(id, updatedUser);
+    if (!result) {
+        LoggerService.error('User not found');
+        return res.status(404).send('User not found');
+    };
+
+    return res.status(200).json(result);
 });

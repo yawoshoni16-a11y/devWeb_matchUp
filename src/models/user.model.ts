@@ -4,9 +4,10 @@ import { BasicModelDBO, BasicModelDTO, BasicModel } from "./basic.model";
  * Variable that allows us to use a authentification on the information 
  * where we need that
  */
-export interface AuthentificatedUser {
+export interface AuthenticatedUser {
     username : string;
-    token : string
+    token : string;
+    role : ERole
 }
 /**
  * Variable constants (enum) of type : string - for the user role
