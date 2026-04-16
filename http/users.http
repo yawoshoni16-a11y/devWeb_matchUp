@@ -22,6 +22,7 @@ Authorization:
 
 #5 Get a user by his id
 GET http://localhost:3000/users/id/4 HTTP/1.1
+Authorization: 
 
 ###
 
@@ -49,3 +50,22 @@ Content-Type: application/json
     "username": "jesepo",
     "password": "Fred123"
 }
+
+###
+#8 Put : allows an admin to update any users and an user to update his/her own profile
+PUT http://localhost:3000/users/3 HTTP/1.1
+Authorization: 
+Content-Type: application/json
+
+{
+
+}
+
+###
+#9 Patch : change a user's role
+PATCH http://localhost:3000/users/2/role/trainer HTTP/1.1
+Authorization: 
+
+###
+#10 Patch : reactivate a inactive user
+PATCH http://localhost:3000/users/3/reactivate

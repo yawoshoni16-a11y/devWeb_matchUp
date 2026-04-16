@@ -1,4 +1,7 @@
-import { NewTeam, NewTeamDTO, Team, TeamDBO, TeamDTO, TeamShortDTO } from "../models/team.model";
+import { NewTeam, NewTeamDTO, Team, TeamDBO, TeamDTO, TeamFull, TeamFullDTO, TeamShortDTO } from "../models/team.model";
+import { UserShortDTO } from "../models/user.model";
+import { UsersServices } from "../services/user.service";
+import { UserMapper } from "./user.mapper";
 
 /**
  * Mapper class to convert between Team and TeamDBO/TeamDTO/TeamShortDTO
@@ -36,6 +39,25 @@ export class TeamMapper {
             name : team.name,
             sportType : team.sportType
         };
+    };
+    
+    public static toFullTeam(team: TeamFull): TeamFullDTO | undefined {
+
+        const user : UserShortDTO[] = [];
+        for (let i = 0; i < team.players.length; i++) {
+            user.push(UserMapper.toUserShortDTO(team.players[i]));
+        };
+        
+        return {
+            id: team.id,
+            name: team.name,
+            description: team.description,
+            sportType: team.sportType,
+            players: user,
+            trainer: UserMapper.toUserDTO(team.trainer),
+            createdAt: team.createdAt.toISOString(),
+            updatedAt: team.updatedAt.toISOString()
+        }
     };
 
     public static fromTeamDTO(dto: TeamDTO): Team {

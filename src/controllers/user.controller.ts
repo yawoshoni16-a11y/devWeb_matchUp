@@ -6,6 +6,7 @@ import { UserMapper } from "../mappers/user.mapper";
 import { isNewUserDTO, isNumber, isString, isUserDTO } from "../utils/guards";
 import { AuthServices } from "../services/auth.service";
 import { AuthenticatedRequest } from "../models/auth.model";
+import { ifError } from "node:assert";
 
 export const userController = Router();
 
@@ -15,7 +16,10 @@ export const userController = Router();
 userController.get('/', AuthServices.authorize,(req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[GET] /users/');
 
-    const role : ERole = req.user!.role;
+    const user = req.user;
+    if (!user) return res.status(401).send("not authorised");
+    const role = user.role;
+    
     const usersDTO = [];
     const users = UsersServices.getAll();
      
@@ -121,7 +125,7 @@ userController.get('/email/:email', AuthServices.authorize, AuthServices.isAdmin
 });
 
 /**
- * This route returns the user that match with the email
+ * This route returns the user that match with the ID
  */
 userController.get('/id/:id', (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[GET] /users/id/:id');
@@ -129,7 +133,7 @@ userController.get('/id/:id', (req: AuthenticatedRequest, res: Response) => {
     const id = Number(req.params.id);
 
     /**
-     * Verify the type of the username 
+     * Verify the type of the ID 
      */
     if (!isNumber(id)) {
         LoggerService.error('Id must be a number');
@@ -223,12 +227,12 @@ userController.post('/', (req: Request, res: Response) => {
 userController.put('/:id', AuthServices.authorize, (req: Request, res: Response) => {
     LoggerService.info('PUT /users/:id');
     
-    const id = parseInt(req.params.id);
+    const id = Number(req.params.id);
     const updatedUser = req.body;
     const connectedUser = req.body;
 
     // Verify that the id is a valid number
-    if (isNumber(id)) {
+    if (!isNumber(id)) {
         LoggerService.error('ID is not a valid number');
         return res.status(400).send('ID is not a valid number');
     };
@@ -253,4 +257,111 @@ userController.put('/:id', AuthServices.authorize, (req: Request, res: Response)
     };
 
     return res.status(200).json(result);
+});
+
+/**
+ * This route allows an admin to soft-delete any users and an user to soft-delete
+ * his/her own profile
+ */
+userController.delete('/:id', AuthServices.authorize, (req: AuthenticatedRequest, res: Response) => {
+    LoggerService.info('[DELETE] /users/:id');
+
+    const id = Number(req.params.id);
+    // Retrieve the authenticated user
+    const user = req.user;
+
+    // Verify that the id is a number 
+    if (!isNumber(id)) {
+        LoggerService.error('ID must be a number');
+        return res.status(400).json('Invalid ID')
+    };
+
+    // Verify that the user to delete exist
+    const userDeleted = UsersServices.getById(id);
+    if (!userDeleted) {
+        LoggerService.error('User not found');
+        return res.status(404).json('User not found');
+    };
+
+    // Prevent an admin account from being deleted
+    if (userDeleted.role === ERole.ADMIN) {
+        LoggerService.error('Admin account can not be deleted');
+        return res.status(400).json('Attempt to delete an admin account');
+    };
+
+    // Verify that the user can only soft-delete his own account
+    if (user?.role !== ERole.ADMIN && user?.id !== id) {
+        LoggerService.error('An user can not soft-delete an other user');
+        return res.status(403).json('Authenticated user is not an admin');
+    };
+
+    // The soft delete with my service (usersServices.delete)
+    const deleted = UsersServices.delete(id);
+    return res.status(200).json(deleted)
+})
+
+/**
+ * This route updates the role of a user (admin only)
+ * The user must currently have the player role to be promoted
+ * @returns 200 with the updated user, 400 if invalid ID, invalid role value or user is not a player
+ * 401 if missing or invalid token, 403 if not admin, 404 if user not found
+ */
+userController.patch('/:id/role/:role', AuthServices.authorize, AuthServices.isAdmin, (req: AuthenticatedRequest, res: Response) => {
+    LoggerService.info('[PATCH] /users/:id/role/:role');
+    
+    // Retrieve and verify the id
+    const id = Number(req.params.id);
+    if (!isNumber(id)) {
+        LoggerService.error('ID must be a number');
+        return res.status(400).json('ID must be a number')
+    };
+
+    // Retrieve and verify the role
+    const role = req.params.role;
+    if (role !== ERole.PLAYER && role !== ERole.ADMIN && role !== ERole.TRAINER && role !== ERole.REFEREE) {
+        LoggerService.error('Invalid role');
+        return res.status(400).json('Invalid role');
+    };
+    
+    const existingUser = UsersServices.getById(id);
+    if (!existingUser) {
+        LoggerService.error('User not found');
+        return res.status(404).json('User not found');
+    };
+
+    if (existingUser.role !== ERole.PLAYER) {
+        LoggerService.error('User is not a player');
+        return res.status(400).json('User is not a player');
+    };
+
+    const updated = UsersServices.updateRole(role, id);
+    if (!updated) {
+        LoggerService.error('User not found');
+        return res.status(404).json('User not found');
+    };
+
+    return res.status(200).json(UserMapper.toUserDTO(updated));
+});
+
+/**
+ * This route reactivates an inactive user (admin only)
+ * Sets the user's status back to active
+ * @returns 200 (wwith no body), 401 if missing or invalid token, 403 if not admin, 404 if user not found
+ */
+userController.patch('/:id/reactivate', AuthServices.authorize, AuthServices.isAdmin, (req: AuthenticatedRequest, res: Response) => {
+    LoggerService.info('[PATCH] /users/:id/reactivate');
+
+    const id = Number(req.params.id);
+    if (!isNumber(id)) {
+        LoggerService.error('ID must be a number');
+        return res.status(400).json('ID must be a number');
+    };
+
+    const update = UsersServices.reactivateUser(id);
+    if (!update) {
+        LoggerService.error('User not found');
+        return res.status(404).json('User not found');
+    };
+
+    return res.status(200).send();
 });

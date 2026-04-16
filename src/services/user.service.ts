@@ -106,12 +106,12 @@ export class UsersServices {
             if (isNumber(id) && userDBO[i].id === id) {
                 return UserMapper.fromDBO(userDBO[i]);
             } 
-        }
+        };
         return undefined;
     };
 
     /**
-     * Function that creates a new User without requiring authentication.
+     * Function that creates a new User without requiring authentication
      */
     public static create(user : NewUser) : User | undefined {
         let userDBO : UserDBO[] = [];
@@ -120,15 +120,15 @@ export class UsersServices {
         } catch (error) {
             LoggerService.error(`Error reading users file: ${error}`);
             return undefined;
-        }
+        };
 
         // ID calculation
         let maxId = 0;
         for (let i = 0; i < userDBO.length; i++) {
             if (userDBO[i].id > maxId) {
                 maxId = userDBO[i].id;
-            }
-        }
+            };
+        };
 
         // Gives a new ID to the new User (+1 because he or she or them is new)
         const newUser : User = {
@@ -139,7 +139,7 @@ export class UsersServices {
             status: EUserStatus.ACTIVE,
             createdAt: new Date(),
             updatedAt: new Date()
-        }
+        };
 
         // Convert to DBO
         const newUserDBO = UserMapper.toDBO(newUser);
@@ -151,12 +151,12 @@ export class UsersServices {
         } catch (error) {
             LoggerService.error(error);
             return undefined;
-        }
+        };
         return newUser;
     };
 
     /**
-     * Function that update a User without requiring authentication.
+     * Function that update a User without requiring authentication
      */
     public static update(id: number, updatedUser: User) : User | undefined {
         let userDBO : UserDBO [] = [];
@@ -171,27 +171,153 @@ export class UsersServices {
         for (let i = 0; i < userDBO.length; i++) {
             if(userDBO[i].id === id) {
 
-            // Only update allowed fields - preserve role, password and status
-            userDBO[i].first_name = updatedUser.firstName;
-            userDBO[i].last_name = updatedUser.lastName;
-            userDBO[i].email = updatedUser.email;
-            userDBO[i].username = updatedUser.username;
-            userDBO[i].updated_at = new Date().toISOString();
+                // Only update allowed fields - preserve role, password and status
+                userDBO[i].first_name = updatedUser.firstName;
+                userDBO[i].last_name = updatedUser.lastName;
+                userDBO[i].email = updatedUser.email;
+                userDBO[i].username = updatedUser.username;
+                userDBO[i].updated_at = new Date().toISOString();
 
-            // Save the updated list back to the file
-            try {
-                FilesService.writeFile<UserDBO>(this.fileName, userDBO);
-            } catch (error) {
-                LoggerService.error(error);
-                return undefined;
-            };
+                // Save the updated list back to the file
+                try {
+                    FilesService.writeFile<UserDBO>(this.fileName, userDBO);
+                } catch (error) {
+                    LoggerService.error(error);
+                    return undefined;
+                };
 
-            // Return the updated user
-            return updatedUser;
+                // Return the updated user
+                return updatedUser;
             };
-            
         };
         // User not found
         return undefined;
+    };
+
+    /**
+     * Soft-deletes a user by setting their status to inactive
+     * Admin can delete any user; a non-admin can only delete their own account
+     * Admin accounts cannot be deleted.
+     * @param id - The id of the user to delete
+     * @returns The updated User
+     */
+    public static delete(id : number) : User | undefined {
+        let userDBO : UserDBO[] = [];
+        try {
+            userDBO = FilesService.readFile<UserDBO>(this.fileName);
+        } catch (error) {
+            LoggerService.error(`Error reading users file: ${error}`);
+            return undefined;
+        };
+
+        // Find the user to delete 
+        let userIndex = -1;
+        for (let i = 0; i < userDBO.length; i++) {
+            if (userDBO[i].id === id) {
+                userIndex = i;
+            };
+        };
+
+        // Verify that the user exists
+        if (userIndex === -1) {
+            return undefined;
+        };
+
+        // Put the user's statut to INACTIVE
+        userDBO[userIndex].status = EUserStatus.INACTIVE;
+
+        // Save the file 
+        try {
+            FilesService.writeFile<UserDBO>(this.fileName, userDBO);
+        } catch (error) {
+            LoggerService.error(error);
+            return undefined;
+        };
+
+        return UserMapper.fromDBO(userDBO[userIndex]);
+    };
+
+    /**
+     * Updates the role of the user identified by the given id
+     * @param role - The new role to give to the user
+     * @param id - The id of the user to update
+     * @returns The updated User, or undefined if the user is not found 
+     */
+    public static updateRole(role : ERole, id : number) : User | undefined {
+       let userDBO : UserDBO[] = [];
+        try {
+            userDBO = FilesService.readFile<UserDBO>(this.fileName);
+        } catch (error) {
+            LoggerService.error(`Error reading users file: ${error}`);
+            return undefined;
+        };
+        
+        // Find the user to update his/her role 
+        let userIndex = -1;
+        for (let i = 0; i < userDBO.length; i++) {
+            if (userDBO[i].id === id) {
+                userIndex = i;
+            };
+        };
+
+        // Verify that the user exists
+        if (userIndex === -1) {
+            return undefined;
+        };
+
+        // Update the user's role
+        userDBO[userIndex].role = role;
+        userDBO[userIndex].updated_at = new Date().toISOString();
+
+        // Save the file 
+        try {
+            FilesService.writeFile<UserDBO>(this.fileName, userDBO);
+        } catch (error) {
+            LoggerService.error(error);
+            return undefined;
+        };
+
+        return UserMapper.fromDBO(userDBO[userIndex]);
+    };
+
+    /**
+     * Reactivates a soft-deleted user by setting their status back to active
+     * @param id - The id of the user to reactivate
+     * @returns The reactivated User, or undefined if the user is not found
+     */
+    public static reactivateUser(id: number) : User | undefined {
+        let userDBO : UserDBO[] = [];
+        try {
+            userDBO = FilesService.readFile<UserDBO>(this.fileName);
+        } catch (error) {
+            LoggerService.error(error);
+            return undefined
+        };
+
+        // Find the user to reactivate
+        let userIndex = -1;
+        for (let i = 0; i < userDBO.length; i++) {
+            if (userDBO[i].id === id) {
+                userIndex = i;
+            };
+        };
+
+        // Verify if the user exists
+        if (userIndex === -1) {
+            return undefined;
+        };
+
+        userDBO[userIndex].status = EUserStatus.ACTIVE;
+        userDBO[userIndex].updated_at = new Date().toISOString();
+        
+        // Save in the file
+        try {
+            FilesService.writeFile<UserDBO>(this.fileName, userDBO);
+        } catch (error) {
+            LoggerService.error(error);
+            return undefined;
+        };
+
+        return UserMapper.fromDBO(userDBO[userIndex]);
     };
 }

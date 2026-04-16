@@ -90,9 +90,32 @@ export class AuthServices {
             return res.status(401).send('Unauthorized');
         };
 
-        // Verify that the user has the role : admin
+        // Verify that the user has the role : admin or referee
         if (user.role !== ERole.ADMIN && user.role !== ERole.REFEREE) {
             LoggerService.error(`Access denied: user '${user.username}' does not have admin or referee role`);
+            return res.status(403).send('Forbidden');
+        };
+        return next();
+    };
+
+    /**
+     * Middleware that restricts access to admin users only.
+     * @param req - The incoming HTTP request, extended with the authenticated user
+     * @param res - The HTTP response object used to send error responses if authorization fails
+     * @param next - The next middleware function to call if the user is an admin
+     * @returns void - Calls next() if the user is admin, otherwise returns 401 or 403 response
+     */
+    public static isAdmin (req: AuthenticatedRequest, res: Response, next: NextFunction){
+        // Retrieve the authenticated user from the request
+        const user = req.user;
+        if (!user) {
+            LoggerService.error('No authenticated user found in request');
+            return res.status(401).send('Unauthorized');
+        };
+
+        // Verify that the user has the role : admin 
+        if (user.role !== ERole.ADMIN) {
+            LoggerService.error(`Access denied: user '${user.username}' does not have admin role`);
             return res.status(403).send('Forbidden');
         };
         return next();

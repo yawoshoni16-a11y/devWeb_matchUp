@@ -1,2 +1,62 @@
 # Get a short view of all teams (TeamShortDTO)
 GET http://localhost:3000/teams HTTP/1.1
+
+###
+# Post : create a new team 
+# @name trainer_login
+POST http://localhost:3000/auth/login HTTP/1.1
+Content-Type: application/json
+
+{
+    "username" : "trainer",
+    "password" : "trainer"
+}
+
+###
+# Post : create a new team 
+POST http://localhost:3000/teams HTTP/1.1
+Authorization: {{trainer_login.response.body.token}}
+Content-Type: application/json
+
+{
+    "name" : "Canter",
+    "description" : "A competitive basketball team",
+    "sportType": "basketball"
+}
+
+###
+# Get the teams the authenticated user belongs to (any authenticated user)
+GET http://localhost:3000/teams/own HTTP/1.1
+Authorization: dHJhaW5lcg==
+
+###
+# Get a team by his ID
+GET http://localhost:3000/teams/id/2 HTTP/1.1
+
+###
+# Put : Update a team
+PUT http://localhost:3000/teams/2 HTTP/1.1
+Authorization: {{trainer_login.response.body.token}}
+Content-Type: application/json
+
+{
+    "id": 2,
+    "name": "Red Dragons FC",
+    "description": "Updated description",
+    "sportType": "football",
+    "players": [
+        2,
+        3
+    ],
+    "trainerId": 5
+}
+
+###
+# Patch : Change the table of players (to offer the possibility to player to join a team)
+PATCH http://localhost:3000/teams/3/join HTTP/1.1
+Authorization: {{trainer_login.response.body.token}}
+
+###
+# Patch : Leave a team
+PATCH http://localhost:3000/teams/2/leave HTTP/1.1
+Authorization: {{trainer_login.response.body.token}}

@@ -1,5 +1,5 @@
 import { BasicModel, BasicModelDBO, BasicModelDTO } from "./basic.model";
-import { UserShortDTO } from "./user.model";
+import { User, UserShortDTO } from "./user.model";
 
 /**
  * Variable constants (enum) of type : string - for the team sport types
@@ -21,6 +21,17 @@ export interface Team extends BasicModel {
     sportType : ESportType;
     players : number[];
     trainerId : number
+};
+
+/**
+ * The model of a TeamFull
+ */
+export interface TeamFull extends BasicModel {
+    name : string;
+    description	?: string;
+    sportType : ESportType;
+    players : User[];
+    trainer : User
 };
 
 /**
@@ -65,7 +76,7 @@ export interface TeamFullDTO extends BasicModelDTO {
     description ?: string;
     sportType : ESportType;
     players : UserShortDTO[];
-    trainer : UserShortDTO[];
+    trainer : UserShortDTO;
 };
 
 /**
