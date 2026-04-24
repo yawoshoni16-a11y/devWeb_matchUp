@@ -2,6 +2,8 @@ import express, { type Express } from 'express'
 import { userController } from './controllers/user.controller';
 import { authController } from './controllers/auth.controller';
 import { teamController } from './controllers/team.controller';
+import { gameController } from './controllers/game.controller';
+import { fieldController } from './controllers/field.controller';
 
 export const app : Express = express();
 
@@ -26,17 +28,17 @@ app.get('/', (req, res) => {
   res.send('Hello World!');
 });
 
+// use the controller to use the route | defines the route to auth
+app.use('/auth', authController);
+
 // use the controller to use the route | defines the route to users
 app.use('/users', userController);
 
 // use the controller to use the route | defines the route to teams
 app.use('/teams', teamController);
 
-// use the controller to use the route | defines the route to fields
-app.use('/fields', userController);
-
 // use the controller to use the route | defines the route to games
-app.use('/games', userController);
+app.use('/games', gameController);
 
-// use the controller to use the route | defines the route to auth
-app.use('/auth', authController);
+// use the controller to use the route | defines the route to fields
+app.use('/fields', fieldController);

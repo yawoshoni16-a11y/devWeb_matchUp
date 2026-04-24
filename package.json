@@ -12,7 +12,6 @@
   },
   "license": "MIT",
   "author": "Jerome Plumat",
-  "type": "module",
   "main": "main.js",
   "scripts": {
     "start": "node --watch dist/main.js",

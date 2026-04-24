@@ -31,7 +31,7 @@ export class AuthServices {
         const results: AuthenticatedUser = {
             username: username,
             token: token,
-            role: ERole.PLAYER
+            role: userFound.role
         };
         return results;
     };
@@ -137,8 +137,47 @@ export class AuthServices {
         };
 
         // Verify that the user has the role : trainer
-        if (user.role !== 'trainer') {
-            LoggerService.error(`Access denied: user '${user.username}' does not have admin trainer`);
+        if (user.role !== ERole.TRAINER) {
+            LoggerService.error(`Access denied: user '${user.username}' does not have trainer role`);
+            return res.status(403).send('Forbidden');
+        };
+        return next();
+    };
+
+    /**
+     * 
+     * @param req 
+     * @param res 
+     * @param next 
+     * @returns 
+     */
+    public static isReferee (req: AuthenticatedRequest, res: Response, next: NextFunction){
+        // Retrieve the authenticated user from the request
+        const user = req.user;
+        if (!user) {
+            LoggerService.error('No authenticated user found in request');
+            return res.status(401).send('Unauthorized');
+        };
+
+        // Verify that the user has the role : referee
+        if (user.role !== ERole.REFEREE) {
+            LoggerService.error(`Access denied: user '${user.username}' does not have referee role`);
+            return res.status(403).send('Forbidden');
+        };
+        return next();
+    };
+
+    public static isAdminOrRefereeOrTrainer(req: AuthenticatedRequest, res: Response, next: NextFunction){
+        // Retrieve the authenticated user from the request
+        const user = req.user;
+        if (!user) {
+            LoggerService.error('No authenticated user found in request');
+            return res.status(401).send('Unauthorized');
+        };
+
+        // Verify that the user has the role : referee or admin or trainer
+        if (user.role !== ERole.REFEREE && user.role !== ERole.ADMIN && user.role !== ERole.TRAINER) {
+            LoggerService.error(`Access denied: user '${user.username}' does not have referee or admin or trainer role`);
             return res.status(403).send('Forbidden');
         };
         return next();

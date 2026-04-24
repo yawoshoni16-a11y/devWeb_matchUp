@@ -9,7 +9,7 @@ import { User, UserDBO } from "../models/user.model";
 import { isNumber } from "../utils/guards";
 
 export class TeamsServices {
-    private static fileName = 'data/teams.json'
+    private static fileName = 'data/teams.json';
 
     /**
      * Function that allows everybody to get a short view of all teams

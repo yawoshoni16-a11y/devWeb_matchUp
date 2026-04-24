@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { LoggerService } from "../services/logger.service";
-import { isNumber, isString } from "../utils/guards";
+import { isNewTeamDTO, isNumber, isString } from "../utils/guards";
 import { NewTeam, Team, TeamDTO, TeamFull, TeamFullDTO, TeamShortDTO } from "../models/team.model";
 import { TeamsServices } from "../services/team.service";
 import { TeamMapper } from "../mappers/team.mapper";
@@ -16,7 +16,7 @@ export const teamController = Router();
 teamController.get('/', (req: Request, res: Response) => {
     LoggerService.info('[GET] /teams/');
 
-    // Retrieve all teams from the service (returns Team[])
+    // Retrieve all teams from the service
     const teams: Team[] = TeamsServices.getAll();
 
     // Convert each Team to a TeamShortDTO using the mapper with a "for loop"
@@ -38,26 +38,47 @@ teamController.get('/', (req: Request, res: Response) => {
 teamController.post('/', AuthServices.authorize, AuthServices.isTrainer, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[POST] /teams/');
 
-    // Retrieve the authenticated trainer from req.user
+    // // Retrieve the authenticated trainer from req.user
+    // const trainer = req.user;
+    // const trainers = req.body;
+
+    // // Build the NewTeam using the body and trainerId of the connected trainer
+    // const newTeam: NewTeam = {
+    //     name: trainers.name,
+    //     description: trainers.description,
+    //     sportType: trainers.sportType,
+    // };
+
+    // // Validate required fields
+    // if (!newTeam.name || !newTeam.description || !newTeam.sportType) {
+    //     return res.status(400).json('Invalid or missing fields');
+    // };
+
+    // // Trainer can possibly be undefined so we have to verify it
+    // if (!trainer) {
+    //     return undefined;
+    // };
     const trainer = req.user;
-
-    // Build the NewTeam using the body and trainerId of the connected trainer
-    const newTeam: NewTeam = {
-        name: req.body.name,
-        description: req.body.description,
-        sportType: req.body.sportType,
+    if (!trainer) {
+        return undefined;
     };
 
-    // Validate required fields
-    if (!newTeam.name || !newTeam.description || !newTeam.sportType) {
-        return res.status(400).json('Invalid or missing fields');
+    const newTeamDTO = req.body;
+    if (!isNewTeamDTO(newTeamDTO)) {
+        LoggerService.error('Invalid or missing required fields');
+        return res.status(400).send('Invalid or missing required fields');        
     };
+
+    const newTeam: NewTeam = TeamMapper.fromNewteamDTO(newTeamDTO);
 
     // Create the team through the service
-    const team = TeamsServices.create(newTeam, trainer!.id);
+    const teamCreated = TeamsServices.create(newTeam, trainer.id)
+    if (!teamCreated) {
+        return undefined;
+    };
 
     // Return the team created with status 201
-    res.status(201).json(team);
+    res.status(201).json(TeamMapper.toTeamDTO(teamCreated));
 });
 
 /**
@@ -91,8 +112,8 @@ teamController.get('/own', AuthServices.authorize, (req: AuthenticatedRequest, r
 /**
  * This route returns the team that match with the ID
  */
-teamController.get('/id/:id', (req: Request, res: Response) => {
-    LoggerService.info('[GET] /teams/id/:id');
+teamController.get('/:id', (req: Request, res: Response) => {
+    LoggerService.info('[GET] /teams/:id');
     
     const id = Number(req.params.id);
 

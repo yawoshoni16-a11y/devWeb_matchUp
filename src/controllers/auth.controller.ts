@@ -5,6 +5,7 @@ import { isString } from "../utils/guards";
 import { AuthServices } from "../services/auth.service";
 import { UsersServices } from "../services/user.service";
 import { AuthenticatedUser, ERole } from "../models/user.model";
+import { AuthenticatedUserDTO } from "../models/auth.model";
 
 export const authController = Router();
 
@@ -34,10 +35,10 @@ authController.post('/login', (req: Request, res: Response) => {
     };
 
     // Build authentication response with username and generated token
-    const response : AuthenticatedUser = {
+    const response : AuthenticatedUserDTO = {
         username: user.username,
         token: authUser.token,
-        role: ERole.PLAYER
+        role: user.role
     };
 
     return res.status(200).json(response);
