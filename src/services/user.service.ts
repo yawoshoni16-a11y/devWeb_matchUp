@@ -44,7 +44,7 @@ export class UsersServices {
         for (let i = 0; i < data.length; i++) {
             if (data[i].status === EUserStatus.ACTIVE) {
                 results.push(UserMapper.fromDBO(data[i]));
-        }
+        };
     };
         return results;
     };

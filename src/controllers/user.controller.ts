@@ -127,11 +127,10 @@ userController.get('/email/:email', AuthServices.authorize, AuthServices.isAdmin
 /**
  * This route returns the user that match with the ID
  */
-userController.get('/id/:id', (req: AuthenticatedRequest, res: Response) => {
-    LoggerService.info('[GET] /users/id/:id');
+userController.get('/:id', AuthServices.authorize, (req: AuthenticatedRequest, res: Response) => {
+    LoggerService.info('[GET] /users/:id');
     
     const id = Number(req.params.id);
-
     /**
      * Verify the type of the ID 
      */

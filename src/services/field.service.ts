@@ -99,7 +99,11 @@ export class FieldsServices {
         return newFields;
     };
 
-
+    /**
+     * Update a field 
+     * @param updatedField - The field to update
+     * @returns A updated field if it is possible, otherwise undefined if not possible
+     */
     public static update(updatedField: Field): Field | undefined {
         let fieldsDBO: FieldDBO[] = [];
         try {
@@ -109,6 +113,32 @@ export class FieldsServices {
             return undefined;
         };
 
-        
-    }
+        // Find the field to update it
+        let fieldIndex = -1;
+        for (let i = 0; i < fieldsDBO.length; i++) {
+            if (fieldsDBO[i].id === updatedField.id) {
+                fieldIndex = i;
+            };
+        };
+
+        // Undefined when the field is not found
+        if (fieldIndex === -1) {
+            LoggerService.error('Field not found');
+            return undefined;
+        };
+
+        // Change the field in the table --> fieldsDBO[]
+        fieldsDBO[fieldIndex] = FieldMapper.toFieldDBO(updatedField);
+
+        // Save in the file
+        try {
+            FilesService.writeFile<FieldDBO>(this.fileName, fieldsDBO)
+        } catch (error) {
+            LoggerService.error('Error while writing in the file');
+            return undefined;
+        };
+
+        // Everything is fine
+        return updatedField;
+    };
 }

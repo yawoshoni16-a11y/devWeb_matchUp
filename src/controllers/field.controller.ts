@@ -78,3 +78,55 @@ fieldController.post('/', AuthServices.authorize, AuthServices.isAdmin, (req: Au
     
     return res.status(201).json(FieldMapper.toFieldDTO(field));
 });
+
+/**
+ * This route allows an admin to update a field
+ */
+fieldController.put('/:id', AuthServices.authorize, AuthServices.isAdmin, (req: AuthenticatedRequest, res: Response) => {
+    LoggerService.info('[PUT] /fields/:id');
+    
+    // Verify that the ID in the URL (path) is a number
+    const id = Number(req.params.id);
+    if (!isNumber(id)) {
+        LoggerService.error('ID must be a number');
+        return res.status(400).send('ID must be a number');
+    };
+
+    // Verify that the path id is the same as the body
+    const bodyId = Number(req.body.id);
+    if (bodyId !== id) {
+        LoggerService.error('BodyID and pathID is not the same');
+        return res.status(400).send('BodyID and pathID is not the same');
+    };
+
+    // Verify the required fields
+    const name = req.body.name;
+    const location = req.body.location;
+    if (!name || !location) {
+        LoggerService.error('Invalid or missing name or location');
+        return res.status(400).send('Invalid or missing name or location')
+    };
+
+    // Update the field
+    const existingField: Field | undefined = FieldsServices.getFieldByID(id);
+    if (!existingField) {
+        LoggerService.error('Field not found');
+        return res.status(404).send('Field not found');
+    };
+
+    const updateField : Field = {
+        id : id,
+        name : name,
+        location : location,
+        createdAt : existingField.createdAt,
+        updatedAt : new Date()
+    };
+
+    const field: Field | undefined = FieldsServices.update(updateField);
+    if (!field) {
+        LoggerService.error('Fields not found');
+        return res.status(404).send('Fields not found');
+    };
+
+    return res.status(200).json(FieldMapper.toFieldDTO(field));
+});
