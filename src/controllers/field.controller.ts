@@ -3,7 +3,9 @@ import { LoggerService } from "../services/logger.service";
 import { FieldsServices } from "../services/field.service";
 import { FieldMapper } from "../mappers/field.mapper";
 import { isNumber } from "../utils/guards";
-import { Field, FieldDTO } from "../models/field.model";
+import { Field, FieldDTO, NewFieldDTO } from "../models/field.model";
+import { AuthServices } from "../services/auth.service";
+import { AuthenticatedRequest } from "../models/auth.model";
 
 export const fieldController = Router();
 
@@ -46,4 +48,33 @@ fieldController.get('/:id', (req: Request, res: Response) => {
 
     const fieldsDTO: FieldDTO = FieldMapper.toFieldDTO(field);
     return res.status(200).json(fieldsDTO);
+});
+
+/**
+ * This route allows us to create a new field with the name and the location in the body
+ */
+fieldController.post('/', AuthServices.authorize, AuthServices.isAdmin, (req: AuthenticatedRequest, res: Response) => {
+    LoggerService.info('[POST] /fields');
+
+    const name = req.body.name;
+    const location = req.body.location;
+
+    if (!name || !location) {
+        LoggerService.error('Name or location is missing or invalid');
+        return res.status(400).json('Name or location is missing or invalid');
+    };
+
+    const newFieldDTO: NewFieldDTO = {
+        name: name,
+        location: location
+    };
+    
+
+    const field: Field | undefined = FieldsServices.create(newFieldDTO);
+    if (!field) {
+        LoggerService.error('Error creating a field');
+        return res.status(404).send('Error creating a field');
+    };
+    
+    return res.status(201).json(FieldMapper.toFieldDTO(field));
 });

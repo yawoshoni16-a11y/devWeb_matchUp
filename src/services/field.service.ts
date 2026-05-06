@@ -1,5 +1,5 @@
 import { FieldMapper } from "../mappers/field.mapper";
-import { Field, FieldDBO } from "../models/field.model";
+import { Field, FieldDBO, NewField } from "../models/field.model";
 import { isNumber } from "../utils/guards";
 import { FilesService } from "./files.service";
 import { LoggerService } from "./logger.service";
@@ -51,5 +51,64 @@ export class FieldsServices {
         return undefined;
     };
 
-    //public static create(name: string, location: string)
+    /**
+     * Create a new Field
+     * @param newField - The creation of the new field
+     * @returns A new field if it is possible, otherwise undefined if creation impossible
+     */
+    public static create(newField: NewField): Field | undefined {
+        let fieldsDBO : FieldDBO[] = [];
+        try {
+            fieldsDBO = FilesService.readFile<FieldDBO>(this.fileName);
+        } catch (error) {
+            LoggerService.error(`Error reading fields file: ${error}`);
+            return undefined;
+        };
+
+        /**
+         * Search the last/max ID and update it
+         */
+        let maxId = 0;
+        for (let i = 0; i < fieldsDBO.length; i++) {
+            if (fieldsDBO[i].id > maxId) {
+                maxId = fieldsDBO[i].id;
+            };
+        };
+
+        /**
+         * Creation of the new field by retrieve the info
+         */
+        const newFields : Field = {
+            id: maxId + 1,
+            name: newField.name,
+            location: newField.location,
+            createdAt: new Date(),
+            updatedAt: new Date()
+        };
+
+        const newFieldDBO: FieldDBO = FieldMapper.toFieldDBO(newFields);
+        fieldsDBO.push(newFieldDBO);
+
+        try {
+            FilesService.writeFile<FieldDBO>(this.fileName, fieldsDBO);
+        } catch (error) {
+            LoggerService.error(`Error writing fields file: ${error}`);
+            return undefined;
+        };
+        
+        return newFields;
+    };
+
+
+    public static update(updatedField: Field): Field | undefined {
+        let fieldsDBO: FieldDBO[] = [];
+        try {
+            fieldsDBO = FilesService.readFile<FieldDBO>(this.fileName);
+        } catch (error) {
+            LoggerService.error(`Error reading fields file: ${error}`);
+            return undefined;
+        };
+
+        
+    }
 }

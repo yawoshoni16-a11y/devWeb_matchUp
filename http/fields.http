@@ -53,3 +53,10 @@ GET http://localhost:3000/fields/2 HTTP/1.1
 ###
 #3 Post a new field
 POST http://localhost:3000/fields HTTP/1.1
+Authorization: {{user_login.response.body.token}}
+Content-Type: application/json
+
+{
+    "name" : "ING Arena",
+    "location" : "Bruxelles, 1000 Bruxelles"
+}
