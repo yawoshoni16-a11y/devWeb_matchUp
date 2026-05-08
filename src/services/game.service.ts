@@ -4,6 +4,7 @@ import { EGameStatus, Game, GameDBO, GameShortDTO, NewGame } from "../models/gam
 import { isNumber } from "../utils/guards";
 import { FilesService } from "./files.service";
 import { LoggerService } from "./logger.service";
+import { TeamDBO } from "../models/team.model";
 
 export class GamesServices {
     private static fileName = 'data/games.json'; 
@@ -65,9 +66,9 @@ export class GamesServices {
     };
 
     /**
-     * 
+     * Create a new game 
      * @param newGame 
-     * @returns 
+     * @returns undefined if the creation of the game is not possible
      */
     public static create(newGame :  NewGame) : Game | undefined {
         let gameDBO : GameDBO[] = [];
@@ -89,13 +90,21 @@ export class GamesServices {
             gameStatus = EGameStatus.CREATED;
         };
 
+        // ID calculation
+        let maxId = 0;
+        for (let i = 0; i < gameDBO.length; i++) {
+            if (gameDBO[i].id > maxId) {
+                maxId = gameDBO[i].id;
+            };
+        };
+
         /**
          * Creation of the new game by retrieve the info
          */
         const newGames : Game = {
-            id: gameDBO.length + 1,
-            status: gameStatus,
+            id: maxId + 1,
             name: newGame.name,
+            status: gameStatus,
             fieldId: newGame.fieldId,
             refereeId: newGame.refereeId,
             homeTeamId: newGame.homeTeamId,
@@ -127,9 +136,9 @@ export class GamesServices {
     };
 
     /**
-     * 
+     * Update the information of a game
      * @param updatedGame 
-     * @returns 
+     * @returns undefined if the conditions aren't good, otherwise the game can be updated
      */
     public static update(updatedGame : Game) : Game | undefined {
         let gameDBO : GameDBO[] = [];
@@ -140,26 +149,72 @@ export class GamesServices {
             return undefined;
         };
 
-        // Find the game to update
+        // Found the game
         let gameFound = -1;
         for (let i = 0; i < gameDBO.length; i++) {
             if (gameDBO[i].id === updatedGame.id) {
                 gameFound = i;
-            };  
+            };
         };
-
-        // Verify that the team exists
+        LoggerService.debug("ici1") ;
         if (gameFound === -1) {
             LoggerService.error(`Game with id ${updatedGame.id} not found`);
             return undefined;
         };
+        LoggerService.debug("ici2");
+        // Verify if the sport of the homeTeam is the same as the awayTeam
+        if (updatedGame.homeTeamId && updatedGame.awayTeamId) {
+            // Retrieves the homeTeam and awayTeam
+            let homeTeam: TeamDBO | undefined;
+            let awayTeam: TeamDBO | undefined;
+            let teamsDBO: TeamDBO[] = [];
+            try {
+                teamsDBO = FilesService.readFile<TeamDBO>(this.fileName);
+            } catch (error) {
+                LoggerService.error(`Error reading teams file: ${error}`);
+                return undefined;
+            };
+            LoggerService.debug("ici3")
+            for (let i = 0; i < teamsDBO.length; i++) {
+                // Verify if the team is the homeTeam
+                if (teamsDBO[i].id === updatedGame.homeTeamId) {
+                    homeTeam = teamsDBO[i];
+                };
 
-        // Verify the status of the game we want to update
+                // Verify if the team is the awayTeam
+                if (teamsDBO[i].id === updatedGame.awayTeamId) {
+                    awayTeam = teamsDBO[i];
+                };
+            };
+
+            // Error if the teams are not found
+            if (!homeTeam || !awayTeam) {
+                LoggerService.error(`One or both teams not found`);
+                return undefined;
+            };
+            LoggerService.debug("ici4")
+
+            // Error if the teams don't have the same sport
+            if (homeTeam.sport_type !== awayTeam.sport_type) {
+                LoggerService.error(`Teams do not play the same sport: ${homeTeam.sport_type} vs ${awayTeam.sport_type}`);
+                return undefined;
+            };
+            LoggerService.debug("ici5")
+            try {
+                FilesService.writeFile<TeamDBO>(this.fileName, teamsDBO);
+            } catch (error) {
+                LoggerService.error(`Error ${error} writing in teams file`);
+                return undefined;
+            };
+        };
+        LoggerService.debug("ici6")
+        // finished or cancelled -> can not be modified
         if (gameDBO[gameFound].status === EGameStatus.CANCELLED || gameDBO[gameFound].status === EGameStatus.FINISHED) {
             LoggerService.error('A finished or cancelled game cannot be updated');
             return undefined;
         };
-
+        LoggerService.debug("ici7")
+        // started -> fieldId, refereeId, homeTeamId, awayTeamId can not changed
         if (gameDBO[gameFound].status === EGameStatus.STARTED) {
             updatedGame.fieldId = gameDBO[gameFound].field_id;
             updatedGame.refereeId = gameDBO[gameFound].referee_id;
@@ -167,9 +222,41 @@ export class GamesServices {
             updatedGame.awayTeamId = gameDBO[gameFound].away_team_id;
         };
 
+        // Verify the field is already booked for that date
+        if (updatedGame.fieldId && updatedGame.scheduledDate) {
+            const scheduledDay = new Date(updatedGame.scheduledDate);
+
+        for (let i = 0; i < gameDBO.length; i++) {
+            // We ignored the game that we are changing
+            if (gameDBO[i].id === updatedGame.id){
+                continue;
+            };
+
+            // We ignored when the games in status canceled or finished
+            if (gameDBO[i].status === EGameStatus.CANCELLED || gameDBO[i].status === EGameStatus.FINISHED) {
+                continue;
+            };
+
+            if (!gameDBO[i].scheduled_date) {
+                return undefined;
+            };
+            const existingDay = new Date(gameDBO[i].scheduled_date!);
+            
+            // Check if the field is already booked for that date
+            if (gameDBO[i].field_id === updatedGame.fieldId && existingDay.getTime() === scheduledDay.getTime()) {
+                LoggerService.error(`Field ${updatedGame.fieldId} is already booked for ${scheduledDay}`);
+                return undefined;
+            };
+        };
+    };
+
+        // Update of the status 
+        if (updatedGame.fieldId && updatedGame.scheduledDate && gameDBO[gameFound].status === EGameStatus.CREATED) {
+            updatedGame.status = EGameStatus.SCHEDULED;
+        };
+
         gameDBO[gameFound] = GameMapper.toGameDBO(updatedGame);
 
-        // Save the file
         try {
             FilesService.writeFile<GameDBO>(this.fileName, gameDBO);
         } catch (error) {
@@ -181,9 +268,9 @@ export class GamesServices {
     };
 
     /**
-     * 
-     * @param id 
-     * @returns 
+     * Delete a game permanently from our data center (hard delete)
+     * @param id - The ID of the game we want to delete
+     * @returns true if the delete action is done, otherwise false
      */
     public static delete(id: number) : boolean {
         let gameDBO : GameDBO[] = [];
@@ -222,11 +309,11 @@ export class GamesServices {
     };
 
     /**
-     * 
-     * @param id 
-     * @param awayScore 
-     * @param homeScore 
-     * @returns 
+     * Patch : allow us to change the score of a game
+     * @param id - The ID of the game we want to change the score of
+     * @param awayScore - The score of the away team
+     * @param homeScore - The score of the home team
+     * @returns the update of the score, otherwise undefined if it is not possible
      */
     public static updateScore(id: number, homeScore: number, awayScore: number) : Game | undefined {
         let gameDBO : GameDBO[] = [];
@@ -273,9 +360,9 @@ export class GamesServices {
     };
 
     /**
-     * 
-     * @param id 
-     * @param status 
+     * Patch : update the status of a game
+     * @param id - The ID of the game we want to change the status of
+     * @param status - The "new" status of the game 
      */
     public static updateStatus(id: number, status: EGameStatus) : Game | undefined {
         let gameDBO : GameDBO[] = [];
@@ -335,7 +422,6 @@ export class GamesServices {
             LoggerService.error(error);
             return undefined;
         };
-
         return GameMapper.fromGameDBO(gameDBO[gameIndex]);
     };
 }

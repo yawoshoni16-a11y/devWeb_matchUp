@@ -100,6 +100,28 @@ export class FieldsServices {
     };
 
     /**
+     * Retrieves the name of a field
+     * @param name - The name of the field
+     */
+    public static getFieldByName(name: string): Field | undefined {
+        let fieldsDBO: FieldDBO[] = [];
+        try {
+            fieldsDBO = FilesService.readFile<FieldDBO>(this.fileName);
+        } catch (error) {
+            LoggerService.error(`Error reading fields file: ${error}`);
+            return undefined;
+        };
+
+        for (let i = 0; i < fieldsDBO.length; i++) {
+            if (fieldsDBO[i].name === name) {
+                return FieldMapper.fromFieldDBO(fieldsDBO[i]);
+            };
+        };
+
+        return undefined;
+    };
+    
+    /**
      * Update a field 
      * @param updatedField - The field to update
      * @returns A updated field if it is possible, otherwise undefined if not possible

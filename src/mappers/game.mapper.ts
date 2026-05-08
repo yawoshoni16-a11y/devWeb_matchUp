@@ -7,8 +7,8 @@ export class GameMapper {
     public static toGameDTO(game: Game): GameDTO {
         return {
             id : game.id,
-            status : game.status,
             name : game.name,
+            status : game.status,
             fieldId : game.fieldId,
             refereeId : game.refereeId,
             homeTeamId : game.homeTeamId,
@@ -16,16 +16,16 @@ export class GameMapper {
             homeScore : game.homeScore,
             awayScore : game.awayScore,
             scheduledDate : game.scheduledDate,
-            createdAt : game.createdAt.toISOString(),
-            updatedAt : game.updatedAt.toISOString()
+            createdAt : game.createdAt? game.createdAt.toISOString(): "",
+            updatedAt : game.updatedAt? game.updatedAt.toISOString(): ""
         };
     };
 
     public static toGameDBO(game: Game): GameDBO {
         return {
             id : game.id,
-            status : game.status,
             name : game.name,
+            status : game.status,
             field_id : game.fieldId,
             referee_id : game.refereeId,
             home_team_id : game.homeTeamId,
@@ -33,16 +33,16 @@ export class GameMapper {
             home_score : game.homeScore,
             away_score : game.awayScore,
             scheduled_date : game.scheduledDate,
-            created_at : game.createdAt.toISOString(),
-            updated_at : game.updatedAt.toISOString()
+            created_at : game.createdAt? game.createdAt.toISOString():"",
+            updated_at : game.updatedAt? game.updatedAt.toISOString():""
         };
     };
 
     public static toGameShortDTO(game: Game): GameShortDTO {
         return {
             id : game.id,
-            status : game.status,
             name : game.name,
+            status : game.status,
             fieldId : game.fieldId,
             homeTeamId : game.homeTeamId,
             awayTeamId : game.awayTeamId,
@@ -53,8 +53,8 @@ export class GameMapper {
     public static fromGameDTO(dto: GameDTO): Game {
         return {
             id : dto.id,
-            status : dto.status,
             name : dto.name,
+            status : dto.status,
             fieldId : dto.fieldId,
             refereeId : dto.refereeId,
             homeTeamId : dto.homeTeamId,
@@ -70,8 +70,8 @@ export class GameMapper {
     public static fromGameDBO(dbo: GameDBO): Game {
         return {
             id : dbo.id,
-            status : dbo.status,
             name : dbo.name,
+            status : dbo.status,
             fieldId : dbo.field_id,
             refereeId : dbo.referee_id,
             homeTeamId : dbo.home_team_id,

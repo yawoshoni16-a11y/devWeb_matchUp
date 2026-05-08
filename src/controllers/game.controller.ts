@@ -6,6 +6,7 @@ import { GameMapper } from "../mappers/game.mapper";
 import { isEGameStatus, isNewGameDTO, isNumber } from "../utils/guards";
 import { AuthServices } from "../services/auth.service";
 import { AuthenticatedRequest } from "../models/auth.model";
+import { globalAgent } from "node:http";
 
 export const gameController = Router();
 
@@ -60,10 +61,23 @@ gameController.get('/:id', (req: Request, res: Response) => {
 });
 
 /**
- * 
+ * Returns the creation of a new game (GameDTO)
  */
 gameController.post('/', AuthServices.authorize, AuthServices.isReferee, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[POST] /games');
+
+    const newGameDTO = req.body;
+    if (!isNewGameDTO(newGameDTO)) {
+        return res.status(400).send('Missing required fields');
+    };
+
+    const newGame: NewGame = GameMapper.fromNewGameDTO(newGameDTO);
+    
+    const gameCreated = GamesServices.create(newGame);
+    if (!gameCreated) {
+        return undefined;
+    };
+    return res.status(201).json(GameMapper.toGameDTO(gameCreated));
 
     // const {name, homeTeamId, awayTeamId, fieldId, scheduledDate} = req.body;
 
@@ -85,49 +99,54 @@ gameController.post('/', AuthServices.authorize, AuthServices.isReferee, (req: A
     // }
     // const game : Game = GamesServices.create(newGame);
     
-    const newGameDTO = req.body;
-    if (!isNewGameDTO(newGameDTO)) {
-        return res.status(400).send('Missing required fields');
-    };
-
-    const newGame: NewGame = GameMapper.fromNewGameDTO(newGameDTO);
     
-    const gameCreated = GamesServices.create(newGame);
-    if (!gameCreated) {
-        return undefined;
-    };
-    return res.status(201).json(GameMapper.toGameDTO(gameCreated));
 });
 
-/**
- * 
+/**      
+ * Returns the update of a game with restreints (only referee allow)
  */
 gameController.put('/:id', AuthServices.authorize, AuthServices.isReferee, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[PUT] /games/:id');
 
     const id = Number(req.params.id);
-    const gameUpdate = req.body;
+    const game = req.body;
 
     if (!isNumber(id)) {
         LoggerService.error('ID must be a number');
         return res.status(400).json('ID must be a number');
     };
 
-    if (gameUpdate.id !== id) {
+    if (game.id !== id) {
         LoggerService.error('Mismatch ID');
-        return res.status(400).json('Missmatch ID');
+        return res.status(400).json('Wrong parameter of ID');
     };
 
-    // const game : Game = GamesServices.update();
-    
-    // if (!game) {
-    //     LoggerService.error('Game not found');
-    //     return res.status(400).json('Game not found');
-    // }
+    const updatedGame : Game = {
+        id: id,
+        status: game.status,
+        name: game.name,
+        fieldId: game.fieldId,
+        refereeId: game.refereeId,
+        homeTeamId: game.homeTeamId,
+        awayTeamId: game.awayTeamId,
+        homeScore: game.homeScore,
+        awayScore: game.awayScore,
+        scheduledDate: game.scheduledDate,
+        createdAt: game.createdAt,
+        updatedAt: new Date()
+    };
+
+    const result = GamesServices.update(updatedGame);
+    if (!result) {
+        LoggerService.error('Game not found');
+        return res.status(404).send('Game not found');
+    };
+
+    return res.status(200).json(GameMapper.toGameDTO(result));
 });
 
 /**
- * 
+ * Returns nothing just an hard delete of the game from our data center
  */
 gameController.delete('/:id', AuthServices.authorize, AuthServices.isAdmin, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[DELETE] /games/:id');
@@ -148,7 +167,7 @@ gameController.delete('/:id', AuthServices.authorize, AuthServices.isAdmin, (req
 });
 
 /**
- * 
+ * Returns a new status of the game score (only referee)
  */
 gameController.patch('/:id/score/:home/:away', AuthServices.authorize, AuthServices.isReferee, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[PATCH] /games/:id/score/:home/:away');
@@ -184,7 +203,7 @@ gameController.patch('/:id/score/:home/:away', AuthServices.authorize, AuthServi
 });
 
 /**
- * 
+ * Returns a new status of the game (only referee, admin, trainer)
  */
 gameController.patch('/:id/status/:status', AuthServices.authorize, AuthServices.isAdminOrRefereeOrTrainer, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[PATCH] /games/:id/status/:status');

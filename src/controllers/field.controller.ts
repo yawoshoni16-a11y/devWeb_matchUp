@@ -107,6 +107,13 @@ fieldController.put('/:id', AuthServices.authorize, AuthServices.isAdmin, (req: 
         return res.status(400).send('Invalid or missing name or location')
     };
 
+    // Verify that the name is not already taken by another field
+    const fieldName: Field | undefined = FieldsServices.getFieldByName(name);
+    if (fieldName && fieldName.id !== id) {
+        LoggerService.error('Name already taken');
+        return res.status(404).send('Name already taken');
+    };
+
     // Update the field
     const existingField: Field | undefined = FieldsServices.getFieldByID(id);
     if (!existingField) {

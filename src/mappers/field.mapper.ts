@@ -6,8 +6,8 @@ export class FieldMapper {
             id: field.id,
             name: field.name,
             location: field.location,
-            createdAt: field.createdAt.toISOString(),
-            updatedAt: field.updatedAt.toISOString()
+            createdAt: field.createdAt ? field.createdAt.toISOString():"",
+            updatedAt: field.updatedAt ? field.updatedAt.toISOString():""
         };
     };
 
@@ -16,8 +16,8 @@ export class FieldMapper {
             id: field.id,
             name: field.name,
             location: field.location,
-            created_at: field.createdAt.toISOString(),
-            updated_at: field.updatedAt.toISOString()
+            created_at: field.createdAt ? field.createdAt.toISOString():"",
+            updated_at: field.updatedAt ? field.updatedAt.toISOString():""
         };
     };
 

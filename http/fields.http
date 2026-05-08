@@ -60,3 +60,15 @@ Content-Type: application/json
     "name" : "ING Arena",
     "location" : "Bruxelles, 1000 Bruxelles"
 }
+
+###
+#4 Put :Update a field
+PUT http://localhost:3000/fields/3 HTTP/1.1
+Authorization: {{user_login.response.body.token}}
+Content-Type: application/json
+
+{
+    "id" : 3,
+    "name" : "kpop",
+    "location" : "Europe"
+}

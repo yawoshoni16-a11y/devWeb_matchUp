@@ -93,7 +93,7 @@ export class AuthServices {
         // Verify that the user has the role : admin or referee
         if (user.role !== ERole.ADMIN && user.role !== ERole.REFEREE) {
             LoggerService.error(`Access denied: user '${user.username}' does not have admin or referee role`);
-            return res.status(403).send('Forbidden');
+            return res.status(403).send('Acces Forbidden');
         };
         return next();
     };
@@ -116,7 +116,7 @@ export class AuthServices {
         // Verify that the user has the role : admin 
         if (user.role !== ERole.ADMIN) {
             LoggerService.error(`Access denied: user '${user.username}' does not have admin role`);
-            return res.status(403).send('Forbidden');
+            return res.status(403).send('Acces Forbidden');
         };
         return next();
     };
@@ -139,7 +139,7 @@ export class AuthServices {
         // Verify that the user has the role : trainer
         if (user.role !== ERole.TRAINER) {
             LoggerService.error(`Access denied: user '${user.username}' does not have trainer role`);
-            return res.status(403).send('Forbidden');
+            return res.status(403).send('Acces Forbidden');
         };
         return next();
     };
@@ -162,7 +162,7 @@ export class AuthServices {
         // Verify that the user has the role : referee
         if (user.role !== ERole.REFEREE) {
             LoggerService.error(`Access denied: user '${user.username}' does not have referee role`);
-            return res.status(403).send('Forbidden');
+            return res.status(403).send('Acces Forbidden');
         };
         return next();
     };
@@ -178,7 +178,7 @@ export class AuthServices {
         // Verify that the user has the role : referee or admin or trainer
         if (user.role !== ERole.REFEREE && user.role !== ERole.ADMIN && user.role !== ERole.TRAINER) {
             LoggerService.error(`Access denied: user '${user.username}' does not have referee or admin or trainer role`);
-            return res.status(403).send('Forbidden');
+            return res.status(403).send('Acces Forbidden');
         };
         return next();
     };

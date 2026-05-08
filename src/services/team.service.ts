@@ -39,7 +39,6 @@ export class TeamsServices {
      */
     public static getOwn(userId : number) : TeamFull[] {
         let data : TeamDBO[] = [];
-
         try {
             data = FilesService.readFile<TeamDBO>(this.fileName);
         } catch (error) {
@@ -49,12 +48,10 @@ export class TeamsServices {
 
         const results: TeamFull[] = [];
 
-
         for (let i = 0; i < data.length; i++) {
-            // le user fait-il partie de l'equipe
-            // si non -> next
-            // si oui alors ...
-            // Vérifier si le user est player ou trainer de cette équipe
+            // is the user in the team ?
+            // if not -> next
+            // if yes then verify if the user is a player or trainer of that team
             const isPlayer = data[i].players.includes(userId);
             const isTrainer = data[i].trainer_id === userId;
 
@@ -207,10 +204,9 @@ export class TeamsServices {
     };
 
     /**
-     * 
-     * @param id 
-     * @param userId 
-     * @returns 
+     * Allows a user to join a team.
+     * @param id - The ID of the team that the tuser want to join
+     * @param userId - The user that want to join a team
      */
     public static joinTeam(id: number, userId: number) : Team | undefined {
         let teamDBO : TeamDBO[] = [];
@@ -254,10 +250,9 @@ export class TeamsServices {
     };
 
     /**
-     * 
-     * @param id 
-     * @param userId 
-     * @returns 
+     * Allows a user to leave a team
+     * @param id - The ID of the team that the tuser want to leave
+     * @param userId  - The user that want to leave the team
      */
     public static leaveTeam(id: number, userId: number) : Team | undefined {
         let teamDBO : TeamDBO[] = [];

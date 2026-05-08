@@ -49,7 +49,7 @@ GET http://localhost:3000/games HTTP/1.1
 
 ###
 #2 Get the full representation of a single game 
-GET http://localhost:3000/games/3 HTTP/1.1
+GET http://localhost:3000/games/1 HTTP/1.1
 
 ###
 #3 Post : create a new game, only the referee has the permission to do it
@@ -58,33 +58,38 @@ Authorization: {{user_login.response.body.token}}
 Content-Type: application/json
 
 {
-    "name" : "Black Mamba",
+    "name" : "Mamba",
     "homeTeamId" : 2,
     "awayTeamId" : 5
 }
 
 ###
 #4 Put : update a game, only the referee has the permission to do it 
-PUT http://localhost:3000/games/1 HTTP/1.1
+PUT http://localhost:3000/games/3 HTTP/1.1
 Authorization: {{user_login.response.body.token}}
 Content-Type: application/json
 
 {
-    "" : "",
-    "" : ""
+    "id" : 3,
+    "name" : "Basketball Game",
+    "status" : "started",
+    "fieldId" : 4,
+    "homeTeamId" : 1,
+    "awayTeamId" : 2,
+    "scheduledDate" : "2026-08-16T00:00:00.000Z"
 }
 
 ###
 #5 Delete : Removes a game with a hard 
-DELETE http://localhost:3000/games/1 HTTP/1.1
+DELETE http://localhost:3000/games/3 HTTP/1.1
 Authorization: {{user_login.response.body.token}}
 
 ###
 #6 Patch : change the score of a started game (referee only)
-PATCH http://localhost:3000/games/4/score/1/3 HTTP/1.1
+PATCH http://localhost:3000/games/3/score/1/3 HTTP/1.1
 Authorization: {{user_login.response.body.token}}
 
 ###
 #7 Patch : change the status of a game (referee, trainer and admin only)
-PATCH http://localhost:3000/games/6/status/started HTTP/1.1
+PATCH http://localhost:3000/games/3/status/finished HTTP/1.1
 Authorization: {{user_login.response.body.token}}
