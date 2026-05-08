@@ -11,9 +11,6 @@ import bcrypt from "bcrypt";
 export class UsersServices {
     protected static fileName = "data/users.json";
 
-    /**
-     * 
-     */
     public static validateUser(pwd: string, hashedPwd : string) : boolean {
         const isPasswordValid = bcrypt.compareSync(pwd, hashedPwd);
 

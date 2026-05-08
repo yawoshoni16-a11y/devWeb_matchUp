@@ -6,10 +6,10 @@ import { User, UserShortDTO } from "./user.model";
  */
 export enum ESportType {
     FOOTBALL = 'football',
+    BASKETBALL = 'basketball',
     TENNIS = 'tennis',
     VOLLEYBALL = 'volleyball',
-    HANDBALL = 'handball'
-
+    HOCKEY = 'hockey'
 };
 
 /**

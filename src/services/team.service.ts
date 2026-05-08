@@ -1,5 +1,5 @@
 import { truncateSync } from "node:fs";
-import { NewTeam, Team, TeamDBO, TeamFull, TeamFullDTO } from "../models/team.model"
+import { ESportType, NewTeam, Team, TeamDBO, TeamFull, TeamFullDTO } from "../models/team.model"
 import { FilesService } from "./files.service";
 import { LoggerService } from "./logger.service";
 import { UserMapper } from "../mappers/user.mapper";
@@ -106,6 +106,30 @@ export class TeamsServices {
         return undefined;
     };
 
+    /**
+     * Get a team by its name and sport type
+     * @param name - The name of the team
+     * @param sportType - The sport type of the team
+     * @returns The team if found, otherwise undefined
+     */
+    public static getTeamByNameAndSport(name: string, sportType: ESportType): Team | undefined {
+        let teamDBO: TeamDBO[] = [];
+        try {
+            teamDBO = FilesService.readFile<TeamDBO>(this.fileName);
+        } catch (error) {
+            LoggerService.error(`Error reading teams file: ${error}`);
+            return undefined;
+        };
+
+        for (let i = 0; i < teamDBO.length; i++) {
+            if (teamDBO[i].name === name && teamDBO[i].sport_type === sportType) {
+                return TeamMapper.fromTeamDBO(teamDBO[i]);
+            };
+        };
+
+        return undefined;
+    };
+    
     /**
      * Creates a new team and saves it to the data file.
      * The trainerId is provided by the caller (from the authenticated user, not the request body).

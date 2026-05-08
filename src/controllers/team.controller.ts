@@ -38,26 +38,6 @@ teamController.get('/', (req: Request, res: Response) => {
 teamController.post('/', AuthServices.authorize, AuthServices.isTrainer, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[POST] /teams/');
 
-    // // Retrieve the authenticated trainer from req.user
-    // const trainer = req.user;
-    // const trainers = req.body;
-
-    // // Build the NewTeam using the body and trainerId of the connected trainer
-    // const newTeam: NewTeam = {
-    //     name: trainers.name,
-    //     description: trainers.description,
-    //     sportType: trainers.sportType,
-    // };
-
-    // // Validate required fields
-    // if (!newTeam.name || !newTeam.description || !newTeam.sportType) {
-    //     return res.status(400).json('Invalid or missing fields');
-    // };
-
-    // // Trainer can possibly be undefined so we have to verify it
-    // if (!trainer) {
-    //     return undefined;
-    // };
     const trainer = req.user;
     if (!trainer) {
         return undefined;
@@ -67,6 +47,13 @@ teamController.post('/', AuthServices.authorize, AuthServices.isTrainer, (req: A
     if (!isNewTeamDTO(newTeamDTO)) {
         LoggerService.error('Invalid or missing required fields');
         return res.status(400).send('Invalid or missing required fields');        
+    };
+    
+    // Verify that the name is not already taken for the same sport
+    const existingTeam: Team | undefined = TeamsServices.getTeamByNameAndSport(newTeamDTO.name, newTeamDTO.sportType);
+    if (existingTeam) {
+        LoggerService.error('Team name already taken for this sport');
+        return res.status(409).send('Team name already taken for this sport');
     };
 
     const newTeam: NewTeam = TeamMapper.fromNewteamDTO(newTeamDTO);
@@ -140,9 +127,6 @@ teamController.get('/:id', (req: Request, res: Response) => {
 
 /**
  * Updates a team (trainer only).
- * The body id must match the path id. Body must include players and trainerId.
- * The trainer must be the trainer of the team.
- * @returns 200 with the updated Team, 400 if invalid payload or ID mismatch, 401 if not authenticated, 403 if not a trainer or not the trainer of this team, 404 if team not found.
  */
 teamController.put('/:id', AuthServices.authorize, AuthServices.isTrainer, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[PUT] /teams/:id');
@@ -209,7 +193,7 @@ teamController.put('/:id', AuthServices.authorize, AuthServices.isTrainer, (req:
 });
 
 /**
- * 
+ * Allow a user to join a team
  */
 teamController.patch('/:id/join', AuthServices.authorize, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[PATCH] /teams/:id/join');
@@ -235,7 +219,7 @@ teamController.patch('/:id/join', AuthServices.authorize, (req: AuthenticatedReq
 });
 
 /**
- * 
+ * Allow a user to leave a team
  */
 teamController.patch('/:id/leave', AuthServices.authorize, (req: AuthenticatedRequest, res: Response) => {
     LoggerService.info('[PATCH] /teams/:id/leave');
